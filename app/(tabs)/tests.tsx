@@ -1,177 +1,188 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { useState } from 'react'
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import BloodTestCard from '../../components/BloodTestCard';
+
+interface BloodTest {
+  name: string;
+  date: string;
+  status: 'upcoming' | 'completed' | 'overdue';
+  importance: 'High' | 'Medium' | 'Low';
+  description: string;
+  relatedGenes: string[];
+}
 
 export default function TestsScreen() {
-  
-  const bloodTests = [
+  const [tests, setTests] = useState<BloodTest[]>([
     {
-      date: '2024-02-15',
-      type: 'Comprehensive Metabolic Panel',
-      status: 'completed',
-      results: 'Optimal',
-      nextAction: 'Continue current nutrition plan'
-    },
-    {
-      date: '2024-03-01',
-      type: 'Lipid Profile',
-      status: 'scheduled',
-      results: null,
-      nextAction: 'Fast 12 hours before test'
-    },
-    {
-      date: '2024-03-15',
-      type: 'Vitamin D & B12',
-      status: 'recommended',
-      results: null,
-      nextAction: 'Schedule appointment'
-    },
-    {
-      date: '2024-04-01',
-      type: 'Inflammatory Markers',
+      name: 'Homocysteine Level',
+      date: 'Jan 28, 2024',
       status: 'upcoming',
-      results: null,
-      nextAction: 'Based on gene analysis'
+      importance: 'High',
+      description: 'Measures homocysteine levels to assess MTHFR gene function and cardiovascular risk.',
+      relatedGenes: ['MTHFR', 'CBS']
+    },
+    {
+      name: 'Lipid Panel Extended',
+      date: 'Jan 15, 2024',
+      status: 'overdue',
+      importance: 'High',
+      description: 'Comprehensive cholesterol analysis including particle size for APOE variant assessment.',
+      relatedGenes: ['APOE', 'LDLR']
+    },
+    {
+      name: 'Vitamin B12 & Folate',
+      date: 'Dec 20, 2023',
+      status: 'completed',
+      importance: 'Medium',
+      description: 'Assesses B-vitamin status crucial for methylation pathways.',
+      relatedGenes: ['MTHFR', 'MTR']
+    },
+    {
+      name: 'Inflammatory Markers',
+      date: 'Feb 10, 2024',
+      status: 'upcoming',
+      importance: 'Medium',
+      description: 'CRP, IL-6, and TNF-α to assess inflammatory response based on genetic variants.',
+      relatedGenes: ['IL6', 'TNF', 'CRP']
+    },
+    {
+      name: 'Glucose & Insulin Response',
+      date: 'Feb 5, 2024',
+      status: 'upcoming',
+      importance: 'Medium',
+      description: 'Evaluates metabolic function related to FTO gene variant.',
+      relatedGenes: ['FTO', 'TCF7L2']
     }
-  ]
+  ]);
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return '#10B981'
-      case 'scheduled': return '#3B82F6'
-      case 'recommended': return '#F59E0B'
-      case 'upcoming': return '#8B5CF6'
-      default: return '#6B7280'
-    }
-  }
+  const handleScheduleTest = (testName: string) => {
+    Alert.alert(
+      "Schedule Blood Test",
+      `Would you like to schedule "${testName}" at your preferred lab?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Schedule", 
+          onPress: () => {
+            Alert.alert("Success!", "Your blood test has been scheduled. You'll receive a confirmation email shortly.");
+            // Update test status
+            setTests(prevTests => 
+              prevTests.map(test => 
+                test.name === testName 
+                  ? { ...test, status: 'upcoming' as const, date: 'Feb 15, 2024' }
+                  : test
+              )
+            );
+          }
+        }
+      ]
+    );
+  };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'completed': return 'checkmark-circle'
-      case 'scheduled': return 'calendar'
-      case 'recommended': return 'alert-circle'
-      case 'upcoming': return 'time'
-      default: return 'help-circle'
-    }
-  }
+  const upcomingTests = tests.filter(test => test.status === 'upcoming');
+  const overdueTests = tests.filter(test => test.status === 'overdue');
+  const completedTests = tests.filter(test => test.status === 'completed');
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-primary pt-12 pb-6 px-6 rounded-b-3xl">
-        <Text className="text-white text-2xl font-inter-medium mb-2">Blood Test Schedule</Text>
-        <Text className="text-white/80 font-inter">Optimize your nutrition with regular testing</Text>
+      <View className="bg-green-500 pt-12 pb-6 px-6">
+        <Text className="text-white text-2xl font-semibold mb-2">Blood Test Schedule</Text>
+        <Text className="text-white/80">Optimize your nutrition based on genetic markers</Text>
       </View>
 
-      {/* Next Test Alert */}
-      <View className="px-6 mt-6">
-        <View className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
-          <View className="flex-row items-center mb-2">
-            <Ionicons name="calendar" size={20} color="#3B82F6" />
-            <Text className="text-blue-800 font-inter-medium ml-2">Next Test Due</Text>
-          </View>
-          <Text className="text-blue-700 font-inter mb-3">
-            Lipid Profile scheduled for March 1st, 2024
-          </Text>
-          <TouchableOpacity className="bg-blue-500 py-2 px-4 rounded-xl self-start">
-            <Text className="text-white font-inter-medium text-sm">Set Reminder</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Test Schedule */}
-      <View className="px-6">
-        <Text className="text-dark text-xl font-inter-medium mb-4">Test Schedule</Text>
-        
-        {bloodTests.map((test, index) => (
-          <View key={index} className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <View className="flex-row justify-between items-start mb-3">
-              <View className="flex-1">
-                <Text className="text-dark font-inter-medium text-base">{test.type}</Text>
-                <Text className="text-gray-600 font-inter text-sm">
-                  {new Date(test.date).toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })}
-                </Text>
-              </View>
-              <View className="flex-row items-center">
-                <Ionicons 
-                  name={getStatusIcon(test.status)} 
-                  size={20} 
-                  color={getStatusColor(test.status)} 
-                />
-                <Text 
-                  className="font-inter text-sm ml-1 capitalize"
-                  style={{ color: getStatusColor(test.status) }}
-                >
-                  {test.status}
-                </Text>
-              </View>
+      <ScrollView className="flex-1 px-4 py-4">
+        {/* Test Summary */}
+        <View className="bg-white rounded-xl p-4 mb-6 shadow-sm border border-gray-100">
+          <Text className="text-gray-900 font-semibold text-lg mb-3">Test Overview</Text>
+          <View className="flex-row justify-between">
+            <View className="items-center">
+              <Text className="text-2xl font-bold text-blue-500">{upcomingTests.length}</Text>
+              <Text className="text-sm text-gray-600">Upcoming</Text>
             </View>
-            
-            {test.results && (
-              <View className="bg-green-50 p-3 rounded-xl mb-3">
-                <Text className="text-green-800 font-inter-medium text-sm">Results: {test.results}</Text>
-              </View>
-            )}
-            
-            <View className="bg-gray-50 p-3 rounded-xl mb-3">
-              <Text className="text-gray-700 font-inter text-sm">{test.nextAction}</Text>
+            <View className="items-center">
+              <Text className="text-2xl font-bold text-red-500">{overdueTests.length}</Text>
+              <Text className="text-sm text-gray-600">Overdue</Text>
             </View>
-            
-            {test.status === 'recommended' && (
-              <TouchableOpacity className="bg-accent py-2 px-4 rounded-xl">
-                <Text className="text-white font-inter-medium text-center text-sm">Schedule Test</Text>
-              </TouchableOpacity>
-            )}
-            
-            {test.status === 'scheduled' && (
-              <TouchableOpacity className="bg-blue-500 py-2 px-4 rounded-xl">
-                <Text className="text-white font-inter-medium text-center text-sm">View Details</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        ))}
-      </View>
-
-      {/* Why These Tests */}
-      <View className="px-6 mt-6 mb-8">
-        <Text className="text-dark text-xl font-inter-medium mb-4">Why These Tests?</Text>
-        
-        <View className="bg-white rounded-2xl p-4 shadow-sm">
-          <View className="flex-row items-center mb-3">
-            <Ionicons name="information-circle" size={24} color="#00C851" />
-            <Text className="text-dark font-inter-medium text-lg ml-3">Personalized Testing</Text>
-          </View>
-          
-          <Text className="text-gray-700 font-inter mb-4">
-            Based on your genetic profile, these tests will help optimize your nutrition plan:
-          </Text>
-          
-          <View className="space-y-3">
-            <View className="flex-row items-start">
-              <View className="w-2 h-2 bg-primary rounded-full mt-2 mr-3" />
-              <Text className="text-gray-700 font-inter flex-1">
-                <Text className="font-inter-medium">MTHFR variant</Text> requires monitoring folate levels
-              </Text>
-            </View>
-            <View className="flex-row items-start">
-              <View className="w-2 h-2 bg-primary rounded-full mt-2 mr-3" />
-              <Text className="text-gray-700 font-inter flex-1">
-                <Text className="font-inter-medium">APOE ε4</Text> increases need for cardiovascular monitoring
-              </Text>
-            </View>
-            <View className="flex-row items-start">
-              <View className="w-2 h-2 bg-primary rounded-full mt-2 mr-3" />
-              <Text className="text-gray-700 font-inter flex-1">
-                <Text className="font-inter-medium">FTO variant</Text> benefits from metabolic tracking
-              </Text>
+            <View className="items-center">
+              <Text className="text-2xl font-bold text-green-500">{completedTests.length}</Text>
+              <Text className="text-sm text-gray-600">Completed</Text>
             </View>
           </View>
         </View>
-      </View>
-    </ScrollView>
-  )
+
+        {/* Overdue Tests */}
+        {overdueTests.length > 0 && (
+          <>
+            <View className="flex-row items-center mb-3">
+              <Ionicons name="alert-circle" size={20} color="#EF4444" />
+              <Text className="text-red-600 font-semibold text-lg ml-2">Overdue Tests</Text>
+            </View>
+            {overdueTests.map((test, index) => (
+              <BloodTestCard 
+                key={`overdue-${index}`}
+                test={test}
+                onSchedule={() => handleScheduleTest(test.name)}
+              />
+            ))}
+          </>
+        )}
+
+        {/* Upcoming Tests */}
+        {upcomingTests.length > 0 && (
+          <>
+            <View className="flex-row items-center mb-3 mt-4">
+              <Ionicons name="time" size={20} color="#3B82F6" />
+              <Text className="text-blue-600 font-semibold text-lg ml-2">Upcoming Tests</Text>
+            </View>
+            {upcomingTests.map((test, index) => (
+              <BloodTestCard 
+                key={`upcoming-${index}`}
+                test={test}
+                onSchedule={() => handleScheduleTest(test.name)}
+              />
+            ))}
+          </>
+        )}
+
+        {/* Completed Tests */}
+        {completedTests.length > 0 && (
+          <>
+            <View className="flex-row items-center mb-3 mt-4">
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+              <Text className="text-green-600 font-semibold text-lg ml-2">Completed Tests</Text>
+            </View>
+            {completedTests.map((test, index) => (
+              <BloodTestCard 
+                key={`completed-${index}`}
+                test={test}
+                onSchedule={() => handleScheduleTest(test.name)}
+              />
+            ))}
+          </>
+        )}
+
+        {/* Why These Tests Matter */}
+        <View className="bg-white rounded-xl p-4 mt-6 mb-8 shadow-sm border border-gray-100">
+          <Text className="text-gray-900 font-semibold text-lg mb-3">Why These Tests Matter</Text>
+          
+          <View className="mb-3">
+            <Text className="text-gray-900 font-medium mb-1">🧬 Genetic Optimization</Text>
+            <Text className="text-gray-600 text-sm">These tests help us understand how your genetic variants are affecting your health and nutrition needs.</Text>
+          </View>
+          
+          <View className="mb-3">
+            <Text className="text-gray-900 font-medium mb-1">🍎 Personalized Nutrition</Text>
+            <Text className="text-gray-600 text-sm">Results guide our AI to create more targeted meal recommendations for your unique genetic profile.</Text>
+          </View>
+          
+          <View>
+            <Text className="text-gray-900 font-medium mb-1">📈 Health Tracking</Text>
+            <Text className="text-gray-600 text-sm">Regular monitoring helps track improvements and adjust your nutrition plan over time.</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
 }

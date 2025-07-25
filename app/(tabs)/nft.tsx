@@ -1,201 +1,322 @@
-import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
-import { useState } from 'react'
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import NFTCard from '../../components/NFTCard';
+
+interface NFTData {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  currency: string;
+  dataTypes: string[];
+  owner: string;
+  isOwned: boolean;
+  thumbnail: string;
+}
 
 export default function NFTScreen() {
-  const [floorPrice, setFloorPrice] = useState('0.5')
-  const [selectedData, setSelectedData] = useState({
-    geneData: true,
-    bloodTests: true,
-    nutritionHistory: false,
-    fitnessData: false
-  })
+  const [activeTab, setActiveTab] = useState<'marketplace' | 'create' | 'owned'>('marketplace');
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [nftTitle, setNftTitle] = useState('');
+  const [nftDescription, setNftDescription] = useState('');
+  const [floorPrice, setFloorPrice] = useState('');
 
-  const myNFTs = [
+  const [marketplaceNFTs] = useState<NFTData[]>([
     {
-      id: 'NFT001',
-      title: 'Genetic Nutrition Profile #1',
-      price: '0.8 ETH',
-      status: 'listed',
-      views: 24,
-      offers: 3
+      id: '1',
+      title: 'APOE4 Carrier Health Data',
+      description: '2 years of nutrition and blood test data from APOE4 carrier',
+      price: 0.5,
+      currency: 'ETH',
+      dataTypes: ['Blood Tests', 'Nutrition', 'Exercise', 'Sleep'],
+      owner: 'HealthUser123',
+      isOwned: false,
+      thumbnail: ''
     },
     {
-      id: 'NFT002',
-      title: 'Blood Test Results Q1 2024',
-      price: '0.3 ETH',
-      status: 'sold',
-      views: 45,
-      offers: 0
-    }
-  ]
-
-  const marketplaceNFTs = [
+      id: '2',
+      title: 'MTHFR Variant Optimization Journey',
+      description: 'Complete methylation support protocol with results',
+      price: 0.3,
+      currency: 'ETH',
+      dataTypes: ['Gene Analysis', 'Supplements', 'Diet Changes'],
+      owner: 'BiohackerPro',
+      isOwned: false,
+      thumbnail: ''
+    },
     {
-      id: 'MKT001',
+      id: '3',
       title: 'Mediterranean Diet Success Story',
-      price: '1.2 ETH',
-      seller: 'HealthUser123',
-      dataType: 'Nutrition + Fitness'
-    },
-    {
-      id: 'MKT002',
-      title: 'APOE4 Optimization Journey',
-      price: '2.1 ETH',
-      seller: 'GeneticGuru',
-      dataType: 'Genetic + Blood Tests'
+      description: '18-month transformation with genetic-based nutrition',
+      price: 0.8,
+      currency: 'ETH',
+      dataTypes: ['Meal Plans', 'Blood Markers', 'Weight Loss'],
+      owner: 'WellnessGuru',
+      isOwned: false,
+      thumbnail: ''
     }
-  ]
+  ]);
+
+  const [ownedNFTs] = useState<NFTData[]>([
+    {
+      id: 'owned1',
+      title: 'My Genetic Health Journey',
+      description: 'Personal health optimization data with MTHFR and APOE variants',
+      price: 1.2,
+      currency: 'ETH',
+      dataTypes: ['Gene Profile', 'Blood Tests', 'Nutrition', 'Supplements'],
+      owner: 'You',
+      isOwned: true,
+      thumbnail: ''
+    }
+  ]);
+
+  const handleCreateNFT = () => {
+    if (!nftTitle || !nftDescription || !floorPrice) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    Alert.alert(
+      'Create NFT',
+      `Create "${nftTitle}" with floor price of ${floorPrice} ETH?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Create',
+          onPress: () => {
+            Alert.alert('Success!', 'Your health data NFT has been created and listed on the marketplace.');
+            setCreateModalVisible(false);
+            setNftTitle('');
+            setNftDescription('');
+            setFloorPrice('');
+          }
+        }
+      ]
+    );
+  };
+
+  const handleBuyNFT = (nft: NFTData) => {
+    Alert.alert(
+      'Purchase NFT',
+      `Buy "${nft.title}" for ${nft.price} ${nft.currency}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Buy Now',
+          onPress: () => {
+            Alert.alert('Success!', 'NFT purchased successfully! The health data is now available in your collection.');
+          }
+        }
+      ]
+    );
+  };
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <View className="flex-1 bg-gray-50">
       {/* Header */}
-      <View className="bg-purple-500 pt-12 pb-6 px-6 rounded-b-3xl">
-        <Text className="text-white text-2xl font-inter-medium mb-2">NFT Marketplace</Text>
-        <Text className="text-white/80 font-inter">Monetize your health data securely</Text>
+      <View className="bg-purple-600 pt-12 pb-6 px-6">
+        <Text className="text-white text-2xl font-semibold mb-2">Health Data NFTs</Text>
+        <Text className="text-white/80">Monetize and discover valuable health insights</Text>
       </View>
 
-      {/* Earnings Overview */}
-      <View className="px-6 mt-6">
-        <View className="bg-white rounded-2xl p-4 shadow-sm mb-6">
-          <Text className="text-dark font-inter-medium text-lg mb-4">Your Earnings</Text>
-          
-          <View className="flex-row justify-between mb-4">
-            <View className="items-center">
-              <Text className="text-2xl font-inter-medium text-primary">2.4 ETH</Text>
-              <Text className="text-gray-600 font-inter text-sm">Total Earned</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl font-inter-medium text-accent">3</Text>
-              <Text className="text-gray-600 font-inter text-sm">NFTs Sold</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl font-inter-medium text-purple-500">1</Text>
-              <Text className="text-gray-600 font-inter text-sm">Active Listings</Text>
-            </View>
-          </View>
-          
-          <TouchableOpacity className="bg-primary py-3 px-4 rounded-xl">
-            <Text className="text-white font-inter-medium text-center">Withdraw Earnings</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Create New NFT */}
-      <View className="px-6">
-        <Text className="text-dark text-xl font-inter-medium mb-4">Create New NFT</Text>
-        
-        <View className="bg-white rounded-2xl p-4 shadow-sm mb-6">
-          <Text className="text-dark font-inter-medium mb-3">Select Data to Include</Text>
-          
-          {Object.entries(selectedData).map(([key, value]) => (
+      {/* Tab Navigation */}
+      <View className="bg-white px-4 py-3 border-b border-gray-200">
+        <View className="flex-row">
+          {[
+            { key: 'marketplace', label: 'Marketplace', icon: 'storefront' },
+            { key: 'create', label: 'Create', icon: 'add-circle' },
+            { key: 'owned', label: 'My NFTs', icon: 'diamond' }
+          ].map((tab) => (
             <TouchableOpacity
-              key={key}
-              onPress={() => setSelectedData(prev => ({ ...prev, [key]: !value }))}
-              className="flex-row items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
+              key={tab.key}
+              onPress={() => setActiveTab(tab.key as any)}
+              className={`flex-1 flex-row items-center justify-center py-2 mx-1 rounded-lg ${
+                activeTab === tab.key ? 'bg-purple-100' : 'bg-transparent'
+              }`}
             >
-              <Text className="text-gray-700 font-inter capitalize">
-                {key.replace(/([A-Z])/g, ' $1').trim()}
+              <Ionicons 
+                name={tab.icon as any} 
+                size={18} 
+                color={activeTab === tab.key ? '#7C3AED' : '#6B7280'} 
+              />
+              <Text className={`ml-2 font-medium ${
+                activeTab === tab.key ? 'text-purple-700' : 'text-gray-600'
+              }`}>
+                {tab.label}
               </Text>
-              <View className={`w-6 h-6 rounded-full border-2 ${
-                value ? 'bg-primary border-primary' : 'border-gray-300'
-              } items-center justify-center`}>
-                {value && <Ionicons name="checkmark" size={16} color="white" />}
-              </View>
             </TouchableOpacity>
           ))}
-          
-          <View className="mt-4">
-            <Text className="text-dark font-inter-medium mb-2">Set Floor Price (ETH)</Text>
-            <TextInput
-              value={floorPrice}
-              onChangeText={setFloorPrice}
-              placeholder="0.5"
-              keyboardType="decimal-pad"
-              className="border border-gray-300 rounded-xl px-4 py-3 font-inter"
-            />
-          </View>
-          
-          <TouchableOpacity className="bg-purple-500 py-3 px-4 rounded-xl mt-4">
-            <Text className="text-white font-inter-medium text-center">Create & List NFT</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
-      {/* My NFTs */}
-      <View className="px-6">
-        <Text className="text-dark text-xl font-inter-medium mb-4">My NFTs</Text>
-        
-        {myNFTs.map((nft, index) => (
-          <View key={index} className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <View className="flex-row justify-between items-start mb-3">
-              <View className="flex-1">
-                <Text className="text-dark font-inter-medium">{nft.title}</Text>
-                <Text className="text-gray-600 font-inter text-sm">ID: {nft.id}</Text>
-              </View>
-              <View className={`px-3 py-1 rounded-full ${
-                nft.status === 'listed' ? 'bg-green-100' : 'bg-gray-100'
-              }`}>
-                <Text className={`font-inter text-xs capitalize ${
-                  nft.status === 'listed' ? 'text-green-700' : 'text-gray-700'
-                }`}>
-                  {nft.status}
-                </Text>
+      <ScrollView className="flex-1 px-4 py-4">
+        {/* Marketplace Tab */}
+        {activeTab === 'marketplace' && (
+          <>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-gray-900 font-semibold text-xl">Health Data Marketplace</Text>
+              <View className="bg-green-100 px-3 py-1 rounded-full">
+                <Text className="text-green-800 font-medium text-sm">{marketplaceNFTs.length} Available</Text>
               </View>
             </View>
             
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-lg font-inter-medium text-primary">{nft.price}</Text>
-              <View className="flex-row items-center">
-                <Ionicons name="eye" size={16} color="#6B7280" />
-                <Text className="text-gray-600 font-inter text-sm ml-1">{nft.views}</Text>
-                <Ionicons name="pricetag" size={16} color="#6B7280" className="ml-3" />
-                <Text className="text-gray-600 font-inter text-sm ml-1">{nft.offers}</Text>
-              </View>
-            </View>
-            
-            {nft.status === 'listed' && (
-              <View className="flex-row space-x-2">
-                <TouchableOpacity className="flex-1 bg-gray-100 py-2 px-4 rounded-xl">
-                  <Text className="text-gray-700 font-inter-medium text-center text-sm">Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity className="flex-1 bg-red-100 py-2 px-4 rounded-xl">
-                  <Text className="text-red-700 font-inter-medium text-center text-sm">Unlist</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        ))}
-      </View>
+            {marketplaceNFTs.map((nft) => (
+              <NFTCard
+                key={nft.id}
+                nft={nft}
+                onPress={() => {}}
+                onBuy={() => handleBuyNFT(nft)}
+              />
+            ))}
+          </>
+        )}
 
-      {/* Marketplace */}
-      <View className="px-6 mt-6 mb-8">
-        <Text className="text-dark text-xl font-inter-medium mb-4">Marketplace</Text>
-        
-        {marketplaceNFTs.map((nft, index) => (
-          <View key={index} className="bg-white rounded-2xl p-4 mb-4 shadow-sm">
-            <View className="flex-row justify-between items-start mb-3">
-              <View className="flex-1">
-                <Text className="text-dark font-inter-medium">{nft.title}</Text>
-                <Text className="text-gray-600 font-inter text-sm">by {nft.seller}</Text>
+        {/* Create Tab */}
+        {activeTab === 'create' && (
+          <View>
+            <Text className="text-gray-900 font-semibold text-xl mb-4">Create Health Data NFT</Text>
+            
+            <View className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-100">
+              <Text className="text-gray-900 font-semibold text-lg mb-3">Your Available Data</Text>
+              
+              <View className="flex-row items-center mb-3">
+                <Ionicons name="medical" size={20} color="#00C851" />
+                <View className="ml-3 flex-1">
+                  <Text className="text-gray-900 font-medium">Genetic Profile</Text>
+                  <Text className="text-gray-600 text-sm">4 gene variants analyzed</Text>
+                </View>
+                <Ionicons name="checkmark-circle" size={20} color="#00C851" />
               </View>
-              <Text className="text-lg font-inter-medium text-purple-500">{nft.price}</Text>
+              
+              <View className="flex-row items-center mb-3">
+                <Ionicons name="analytics" size={20} color="#3B82F6" />
+                <View className="ml-3 flex-1">
+                  <Text className="text-gray-900 font-medium">Blood Test Results</Text>
+                  <Text className="text-gray-600 text-sm">12 months of data</Text>
+                </View>
+                <Ionicons name="checkmark-circle" size={20} color="#00C851" />
+              </View>
+              
+              <View className="flex-row items-center mb-3">
+                <Ionicons name="restaurant" size={20} color="#FF6B35" />
+                <View className="ml-3 flex-1">
+                  <Text className="text-gray-900 font-medium">Nutrition Data</Text>
+                  <Text className="text-gray-600 text-sm">Personalized meal responses</Text>
+                </View>
+                <Ionicons name="checkmark-circle" size={20} color="#00C851" />
+              </View>
             </View>
-            
-            <View className="bg-purple-50 px-3 py-1 rounded-full self-start mb-3">
-              <Text className="text-purple-700 font-inter text-sm">{nft.dataType}</Text>
-            </View>
-            
-            <TouchableOpacity className="bg-purple-500 py-2 px-4 rounded-xl">
-              <Text className="text-white font-inter-medium text-center text-sm">View Details</Text>
+
+            <TouchableOpacity
+              onPress={() => setCreateModalVisible(true)}
+              className="bg-purple-600 rounded-xl py-4 flex-row items-center justify-center"
+            >
+              <Ionicons name="add-circle" size={20} color="white" />
+              <Text className="text-white font-semibold ml-2">Create NFT from My Data</Text>
             </TouchableOpacity>
           </View>
-        ))}
-        
-        <TouchableOpacity className="bg-gray-100 py-3 px-4 rounded-xl">
-          <Text className="text-gray-700 font-inter-medium text-center">Browse All NFTs</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
-  )
+        )}
+
+        {/* Owned Tab */}
+        {activeTab === 'owned' && (
+          <>
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-gray-900 font-semibold text-xl">My NFT Collection</Text>
+              <View className="bg-purple-100 px-3 py-1 rounded-full">
+                <Text className="text-purple-800 font-medium text-sm">{ownedNFTs.length} Owned</Text>
+              </View>
+            </View>
+            
+            {ownedNFTs.map((nft) => (
+              <NFTCard
+                key={nft.id}
+                nft={nft}
+                onPress={() => {}}
+              />
+            ))}
+
+            {/* Earnings Summary */}
+            <View className="bg-white rounded-xl p-4 mt-4 shadow-sm border border-gray-100">
+              <Text className="text-gray-900 font-semibold text-lg mb-3">Earnings Summary</Text>
+              <View className="flex-row justify-between items-center">
+                <View>
+                  <Text className="text-2xl font-bold text-purple-600">2.4 ETH</Text>
+                  <Text className="text-gray-600 text-sm">Total Earned</Text>
+                </View>
+                <View>
+                  <Text className="text-2xl font-bold text-green-600">$4,320</Text>
+                  <Text className="text-gray-600 text-sm">USD Value</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+      </ScrollView>
+
+      {/* Create NFT Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={createModalVisible}
+        onRequestClose={() => setCreateModalVisible(false)}
+      >
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl p-6">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-2xl font-bold text-gray-900">Create Health Data NFT</Text>
+              <TouchableOpacity 
+                onPress={() => setCreateModalVisible(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center"
+              >
+                <Ionicons name="close" size={20} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View className="mb-4">
+              <Text className="text-gray-700 font-medium mb-2">NFT Title</Text>
+              <TextInput
+                value={nftTitle}
+                onChangeText={setNftTitle}
+                placeholder="e.g., My MTHFR Optimization Journey"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              />
+            </View>
+            
+            <View className="mb-4">
+              <Text className="text-gray-700 font-medium mb-2">Description</Text>
+              <TextInput
+                value={nftDescription}
+                onChangeText={setNftDescription}
+                placeholder="Describe your health data and insights..."
+                multiline
+                numberOfLines={3}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              />
+            </View>
+            
+            <View className="mb-6">
+              <Text className="text-gray-700 font-medium mb-2">Floor Price (ETH)</Text>
+              <TextInput
+                value={floorPrice}
+                onChangeText={setFloorPrice}
+                placeholder="0.5"
+                keyboardType="numeric"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              />
+            </View>
+            
+            <TouchableOpacity
+              onPress={handleCreateNFT}
+              className="bg-purple-600 rounded-lg py-3 flex-row items-center justify-center"
+            >
+              <Ionicons name="diamond" size={20} color="white" />
+              <Text className="text-white font-semibold ml-2">Create & List NFT</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 }
